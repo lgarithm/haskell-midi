@@ -71,7 +71,7 @@ pEventLast last_status_byte = do { delta_time <- pVarlength
 pEvents = p '\0' [] where p last_status_byte events = do { e <- pEventLast last_status_byte
                                                          ; p (status_byte e) (e:events) } <|> (return $ reverse events)
 
-pMidiChunkWith "MThd" len track = MidiHeadChunk x y z where [x, y, z] = map bytes2int (chunksOf 2 track)
+pMidiChunkWith "MThd" len track = let [x, y, z] = map bytes2int (chunksOf 2 track) in MidiHeadChunk x y z
 pMidiChunkWith "MTrk" len track = let events = sure . parse pEvents "MTrk" $ BS.pack $ map (fromIntegral . ord) track
                                   in MidiTrackChunk len events
 
