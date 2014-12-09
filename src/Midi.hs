@@ -33,7 +33,11 @@ data MidiChunk = MidiHeadChunk1 { format :: Int
                                 , midi_events :: [MidiEvent] }
                deriving (Show)
 
+show_chunk (MidiHeadChunk1 x y z) = unlines $ map show $ zip ["format", "ntrks", "division"] [x, y, z]
+show_chunk (MidiTrackChunk len events) = unlines $ (show len) : (map show events)
+
 data MidiFile = MidiFile [MidiChunk]
+instance Show MidiFile where show (MidiFile chunks) = unlines $ map show_chunk chunks
 
 class Sure m where sure :: m a -> a
 instance Sure Maybe where sure (Just x) = x
