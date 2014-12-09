@@ -50,41 +50,38 @@ pVarlength = p 0 where p acc = do { byte <- anyChar >>= return . fromEnum
 
 pSysexEvent status_byte delta_time = do { sysex_len <- pVarlength
                                         ; sysex_data <- replicateM sysex_len anyByte
-                                        ;return $ SysexEvent status_byte delta_time sysex_len sysex_data }
+                                        ; return $ SysexEvent status_byte delta_time sysex_len sysex_data }
 
 pMetaEvent status_byte delta_time = do { meta_type <- anyByte
                                        ; meta_len <- pVarlength
                                        ; meta_data <- replicateM meta_len anyByte
                                        ; return $ MetaEvent status_byte delta_time meta_type meta_len meta_data }
 
-pMidiEvent status_byte delta_time = do { midi_type <- return $ fromIntegral (fromEnum status_byte .&. fromEnum '\xF0')
-                                       ; channel <- return $ fromIntegral (fromEnum status_byte .&. fromEnum '\x0F')
-                                       ; len <- return $ sure . lookup (chr. fromEnum $ midi_type) $ zip "\x80\x90\xA0\xB0\xC0\xD0\xE0" [2, 2, 2, 2, 1, 1, 2]
+pMidiEvent status_byte delta_time = do { midi_type <- return $ status_byte .&. 0xf0
+                                       ; channel <- return $ status_byte .&. 0x0f
+                                       ; len <- return $ sure . lookup midi_type $ zip [0x80, 0x90 .. ] [2, 2, 2, 2, 1, 1, 2]
                                        ; parameters <- replicateM len anyByte
                                        ; return $ MidiEvent status_byte delta_time midi_type channel parameters }
 
-c2b = fromIntegral . fromEnum :: Char -> Word8
-
-pEventWith '\xF0' delta_time = pSysexEvent (c2b '\xF0') delta_time
-pEventWith '\xF7' delta_time = pSysexEvent (c2b '\xF7') delta_time
-pEventWith '\xFF' delta_time = pMetaEvent (c2b '\xFF') delta_time
-pEventWith status_byte delta_time = pMidiEvent (c2b status_byte) delta_time
+pEventWith 0xf0 delta_time = pSysexEvent 0xf0 delta_time
+pEventWith 0xf7 delta_time = pSysexEvent 0xf7 delta_time
+pEventWith 0xff delta_time = pMetaEvent 0xff delta_time
+pEventWith status_byte delta_time = pMidiEvent status_byte delta_time
 
 pEventLast last_status_byte = do { delta_time <- pVarlength
                                  ; byte <- lookAhead anyByte
-                                 ; status_byte <- if (fromEnum byte) < 128 then return byte else anyByte
-                                 ; pEventWith (chr . fromEnum $ status_byte) delta_time } :: Parser MidiEvent
+                                 ; status_byte <- if byte < 128 then return byte else anyByte
+                                 ; pEventWith status_byte delta_time } :: Parser MidiEvent
 
 pEvents = p 0 [] where p last_status_byte events = do { e <- pEventLast last_status_byte
                                                       ; p (status_byte e) (e:events) } <|> (return $ reverse events)
 
-pMidiChunkWith "MThd" len track = let [x, y, z] = map bytes2int (chunksOf 2 track) in MidiHeadChunk1 x y z
-pMidiChunkWith "MTrk" len track = let events = sure . parse pEvents "MTrk" $ BS.pack $ map (fromIntegral . ord) track
-                                  in MidiTrackChunk len events
+pMidiChunkWith "MThd" len track = MidiHeadChunk1 x y z where [x, y, z] = map bytes2int . chunksOf 2 $ track
+pMidiChunkWith "MTrk" len track = MidiTrackChunk len events where events = sure . parse pEvents "MTrk" . BS.pack $ track
 
 pMidiChunk = do { mgk <- replicateM 4 anyChar
-                ; len <- replicateM 4 anyChar >>= return . bytes2int
-                ; track <- replicateM len anyChar
+                ; len <- replicateM 4 anyByte >>= return . bytes2int
+                ; track <- replicateM len anyByte
                 ; return $ pMidiChunkWith mgk len track } :: Parser MidiChunk
 
 pMidiFile = many pMidiChunk >>= return . MidiFile
