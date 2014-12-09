@@ -1,7 +1,7 @@
 module Midi where
 import Control.Monad (replicateM)
 import Data.Bits ((.&.))
-import qualified Data.ByteString as BS
+import qualified Data.ByteString as BS (pack, readFile)
 import Data.Char (chr, ord)
 import Data.List.Split (chunksOf)
 import Data.Word (Word8)
