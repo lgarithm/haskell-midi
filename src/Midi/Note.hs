@@ -6,7 +6,7 @@ import Midi.Const
 
 data Note = Note { offset :: Int
                  , interval :: Int
-                 , pitch :: Word8}
+                 , pitch :: Word8 }
           deriving (Show)
 
 data RawNote = RawNote { raw_offset :: Rational
@@ -30,5 +30,7 @@ pair_notes p s (n@(_, (CtrlEvent _ _ NoteOff ch [pitch, _])) : ns) = let m' = ta
 note (m, n) = Note (fst m) (fst n - fst m) (head . parameters . snd $ m)
 
 ratio a b = fromIntegral a / fromIntegral b :: Rational
+rd d x = ratio (round $ fromRational x * fromIntegral d)  d
+r16 = rd 16
 
-align bpm (Note offset interval pitch) = RawNote (ratio offset bpm) (ratio interval bpm) pitch
+align bpm (Note offset interval pitch) = RawNote (f offset) (f interval) pitch where f = r16 . flip ratio bpm
