@@ -49,7 +49,7 @@ pEventLast last_status_byte = do { delta_time <- pVarlength
 pEvents = p 0 [] where p last_status_byte events = do { e <- pEventLast last_status_byte
                                                       ; p (status_byte e) (e:events) } <|> (return $ reverse events)
 
-pMidiChunkWith "MThd" len track = MidiHeadChunk1 x y z where [x, y, z] = map (bytes2int 266) . chunksOf 2 $ track
+pMidiChunkWith "MThd" len track = MidiHeadChunk1 x y z where [x, y, z] = map (bytes2int 256) . chunksOf 2 $ track
 pMidiChunkWith "MTrk" len track = MidiTrackChunk len events where events = sure . parse pEvents "MTrk" . BS.pack $ track
 
 pMidiChunk = do { mgk <- replicateM 4 anyChar
