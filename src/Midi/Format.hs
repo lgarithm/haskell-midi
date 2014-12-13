@@ -17,7 +17,7 @@ data MidiEvent = CtrlEvent { status_byte :: Word8
                             , event_type :: EventType
                             , sysex_len :: Int
                             , sysex_data :: [Word8] }
-               deriving (Show)
+               deriving (Ord, Eq, Show)
 
 data MidiChunk = HeadChunk1 { format :: Int
                             , ntrks :: Int
