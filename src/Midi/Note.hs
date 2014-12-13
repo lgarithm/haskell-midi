@@ -14,8 +14,8 @@ take_find p s = let idx' = findIndex p s
                   Just idx -> Just (s !! idx, take idx s ++ drop (idx + 1) s)
 
 pair_notes p s [] = reverse p
-pair_notes p s (n@(_, (MidiEvent _ _ NoteOn ch [pitch, _])) : ns) = pair_notes p (s ++ [n]) ns
-pair_notes p s (n@(_, (MidiEvent _ _ NoteOff ch [pitch, _])) : ns) = let m' = take_find ((== pitch) . head . parameters . snd) s
+pair_notes p s (n@(_, (CtrlEvent _ _ NoteOn ch [pitch, _])) : ns) = pair_notes p (s ++ [n]) ns
+pair_notes p s (n@(_, (CtrlEvent _ _ NoteOff ch [pitch, _])) : ns) = let m' = take_find ((== pitch) . head . parameters . snd) s
                                                                      in  case m' of
                                                                        Just (m, s') -> pair_notes ((m, n) : p) s' ns
 

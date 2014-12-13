@@ -3,6 +3,7 @@ import System.Environment
 import Sure
 import Midi
 
-main = do { file:_ <- getArgs
-          ; midi <- pMidiFromFile file
-          ; print . sure $ midi }
+main = getArgs >>= \args -> case args of
+  [file] -> pMidiFromFile file >>= return . sure >>= print
+  ["info", file] -> do { midi <- pMidiFromFile file >>= return . sure
+                       ; print $ head_chunk midi }

@@ -1,4 +1,5 @@
-module Midi.Parse where
+module Midi.Parse ( pMidiFile
+                  , pMidiFromFile) where
 import Control.Monad (replicateM)
 import Data.Bits ((.&.))
 import qualified Data.ByteString as BS (pack, readFile)
@@ -30,16 +31,16 @@ pMetaEvent status_byte delta_time = do { meta_type <- anyByte
                                        ; meta_data <- replicateM meta_len anyByte
                                        ; return $ MetaEvent status_byte delta_time meta_type meta_len meta_data }
 
-pMidiEvent status_byte delta_time = do { midi_type <- return $ status_byte .&. 0xf0
+pCtrlEvent status_byte delta_time = do { midi_type <- return $ status_byte .&. 0xf0
                                        ; channel <- return $ status_byte .&. 0x0f
                                        ; len <- return $ sure . lookup midi_type $ zip [0x80, 0x90 .. ] [2, 2, 2, 2, 1, 1, 2]
                                        ; parameters <- replicateM len anyByte
-                                       ; return $ MidiEvent status_byte delta_time (code_event midi_type) channel parameters }
+                                       ; return $ CtrlEvent status_byte delta_time (code_event midi_type) channel parameters }
 
 pEventWith 0xf0 delta_time = pSysexEvent 0xf0 delta_time
 pEventWith 0xf7 delta_time = pSysexEvent 0xf7 delta_time
 pEventWith 0xff delta_time = pMetaEvent 0xff delta_time
-pEventWith status_byte delta_time = pMidiEvent status_byte delta_time
+pEventWith status_byte delta_time = pCtrlEvent status_byte delta_time
 
 pEventLast last_status_byte = do { delta_time <- pVarlength
                                  ; byte <- lookAhead anyByte
@@ -49,13 +50,13 @@ pEventLast last_status_byte = do { delta_time <- pVarlength
 pEvents = p 0 [] where p last_status_byte events = do { e <- pEventLast last_status_byte
                                                       ; p (status_byte e) (e:events) } <|> (return $ reverse events)
 
-pMidiChunkWith "MThd" len track = MidiHeadChunk1 x y z where [x, y, z] = map (bytes2int 256) . chunksOf 2 $ track
-pMidiChunkWith "MTrk" len track = MidiTrackChunk len events where events = sure . parse pEvents "MTrk" . BS.pack $ track
+pChunkWith "MThd" len track = HeadChunk1 x y z where [x, y, z] = map (bytes2int 256) . chunksOf 2 $ track
+pChunkWith "MTrk" len track = TrackChunk len events where events = sure . parse pEvents "MTrk" . BS.pack $ track
 
-pMidiChunk = do { mgk <- replicateM 4 anyChar
-                ; len <- replicateM 4 anyByte >>= return . bytes2int 256
-                ; track <- replicateM len anyByte
-                ; return $ pMidiChunkWith mgk len track } :: Parser MidiChunk
+pChunk = do { mgk <- replicateM 4 anyChar
+            ; len <- replicateM 4 anyByte >>= return . bytes2int 256
+            ; track <- replicateM len anyByte
+            ; return $ pChunkWith mgk len track } :: Parser MidiChunk
 
-pMidiFile = many pMidiChunk >>= return . MidiFile
+pMidiFile = many pChunk >>= return . MidiFile
 pMidiFromFile file = BS.readFile file >>= return . parse pMidiFile file
