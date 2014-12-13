@@ -31,11 +31,11 @@ pMetaEvent status_byte delta_time = do { meta_type <- anyByte
                                        ; meta_data <- replicateM meta_len anyByte
                                        ; return $ MetaEvent status_byte delta_time meta_type meta_len meta_data }
 
-pCtrlEvent status_byte delta_time = do { midi_type <- return $ status_byte .&. 0xf0
+pCtrlEvent status_byte delta_time = do { midi_type <- return . code_event $ status_byte .&. 0xf0
                                        ; channel <- return $ status_byte .&. 0x0f
-                                       ; len <- return $ sure . lookup midi_type $ zip [0x80, 0x90 .. ] [2, 2, 2, 2, 1, 1, 2]
+                                       ; len <- return $ parameter_lentgh midi_type
                                        ; parameters <- replicateM len anyByte
-                                       ; return $ CtrlEvent status_byte delta_time (code_event midi_type) channel parameters }
+                                       ; return $ CtrlEvent status_byte delta_time midi_type channel parameters }
 
 pEventWith 0xf0 delta_time = pSysexEvent 0xf0 delta_time
 pEventWith 0xf7 delta_time = pSysexEvent 0xf7 delta_time
