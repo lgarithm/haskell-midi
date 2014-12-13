@@ -13,10 +13,8 @@ import Midi.Format
 import Midi.Const
 import Sure
 
-
 carry d x y = d * x + y
 bytes2int n = foldl (carry n) 0 . map fromEnum
-
 anyByte = anyChar >>= return . fromIntegral . fromEnum :: Parser Word8
 
 pVarlength = p [] >>= return . bytes2int 128 where p acc = do { byte <- anyByte
@@ -60,5 +58,4 @@ pMidiChunk = do { mgk <- replicateM 4 anyChar
                 ; return $ pMidiChunkWith mgk len track } :: Parser MidiChunk
 
 pMidiFile = many pMidiChunk >>= return . MidiFile
-
 pMidiFromFile file = BS.readFile file >>= return . parse pMidiFile file

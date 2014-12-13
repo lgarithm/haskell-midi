@@ -1,5 +1,6 @@
 module Midi.Const where
 import Data.Word
+import Sure
 
 data EventType = NoteOff
                | NoteOn
@@ -21,5 +22,5 @@ event_code_table = [ (0x80, NoteOff)
 
 code_event_table = map f event_code_table where f (x, y) = (y, x)
 
-event_code e = let Just c = lookup e code_event_table in c
-code_event c = let Just e = lookup c event_code_table in e
+event_code = sure . flip lookup code_event_table
+code_event = sure . flip lookup event_code_table
