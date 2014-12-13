@@ -7,15 +7,16 @@ data MidiEvent = CtrlEvent { status_byte :: Word8
                            , event_type :: EventType
                            , channel :: Word8
                            , parameters :: [Word8] }
-               | SysexEvent { status_byte :: Word8
-                            , delta_time :: Int
-                            , sysex_len :: Int
-                            , sysex_data :: [Word8] }
                | MetaEvent { status_byte :: Word8
                            , delta_time :: Int
                            , event_type :: EventType
                            , meta_len :: Int
                            , meta_data :: [Word8] }
+               | SysexEvent { status_byte :: Word8
+                            , delta_time :: Int
+                            , event_type :: EventType
+                            , sysex_len :: Int
+                            , sysex_data :: [Word8] }
                deriving (Show)
 
 data MidiChunk = HeadChunk1 { format :: Int

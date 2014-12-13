@@ -25,6 +25,12 @@ data EventType = NoteOff
                | TimeSignature
                | KeySignature
                | SequencerSpecific
+                 -- Sysex Events
+               | Sysex -- unparsed
+               | SysexNormal
+               | DividedContinue
+               | DividedLast
+               | Authorization
                deriving (Eq, Ord, Show)
 
 ctrl_events = [ NoteOff
