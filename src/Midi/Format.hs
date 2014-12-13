@@ -13,7 +13,7 @@ data MidiEvent = CtrlEvent { status_byte :: Word8
                             , sysex_data :: [Word8] }
                | MetaEvent { status_byte :: Word8
                            , delta_time :: Int
-                           , meta_type :: Word8
+                           , event_type :: EventType
                            , meta_len :: Int
                            , meta_data :: [Word8] }
                deriving (Show)

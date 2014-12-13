@@ -26,12 +26,12 @@ pSysexEvent status_byte delta_time = do { sysex_len <- pVarlength
                                         ; sysex_data <- replicateM sysex_len anyByte
                                         ; return $ SysexEvent status_byte delta_time sysex_len sysex_data }
 
-pMetaEvent status_byte delta_time = do { meta_type <- anyByte
+pMetaEvent status_byte delta_time = do { meta_type <- anyByte >>= return . meta_event
                                        ; meta_len <- pVarlength
                                        ; meta_data <- replicateM meta_len anyByte
                                        ; return $ MetaEvent status_byte delta_time meta_type meta_len meta_data }
 
-pCtrlEvent status_byte delta_time = do { midi_type <- return . code_event $ status_byte .&. 0xf0
+pCtrlEvent status_byte delta_time = do { midi_type <- return . ctrl_event $ status_byte .&. 0xf0
                                        ; channel <- return $ status_byte .&. 0x0f
                                        ; len <- return $ parameter_lentgh midi_type
                                        ; parameters <- replicateM len anyByte
