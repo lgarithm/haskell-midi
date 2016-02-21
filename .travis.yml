@@ -1,0 +1,4 @@
+install:
+  - cabal install parsec split
+script:
+  - make
