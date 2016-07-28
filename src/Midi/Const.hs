@@ -1,7 +1,7 @@
 module Midi.Const where
-import Data.Tuple (swap)
-import Data.Word (Word8)
-import Sure
+import           Data.Tuple (swap)
+import           Data.Word  (Word8)
+import           Sure
 
 data EventType = NoteOff
                | NoteOn

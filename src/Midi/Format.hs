@@ -1,28 +1,28 @@
 module Midi.Format where
-import Data.Word
-import Midi.Const
+import           Data.Word
+import           Midi.Const
 
 data MidiEvent = CtrlEvent { status_byte :: Word8
-                           , delta_time :: Int
-                           , event_type :: EventType
-                           , channel :: Word8
-                           , parameters :: [Word8] }
+                           , delta_time  :: Int
+                           , event_type  :: EventType
+                           , channel     :: Word8
+                           , parameters  :: [Word8] }
                | MetaEvent { status_byte :: Word8
-                           , delta_time :: Int
-                           , event_type :: EventType
-                           , meta_len :: Int
-                           , meta_data :: [Word8] }
+                           , delta_time  :: Int
+                           , event_type  :: EventType
+                           , meta_len    :: Int
+                           , meta_data   :: [Word8] }
                | SysexEvent { status_byte :: Word8
-                            , delta_time :: Int
-                            , event_type :: EventType
-                            , sysex_len :: Int
-                            , sysex_data :: [Word8] }
+                            , delta_time  :: Int
+                            , event_type  :: EventType
+                            , sysex_len   :: Int
+                            , sysex_data  :: [Word8] }
                deriving (Ord, Eq, Show)
 
-data MidiChunk = HeadChunk1 { format :: Int
-                            , ntrks :: Int
+data MidiChunk = HeadChunk1 { format   :: Int
+                            , ntrks    :: Int
                             , division :: Int }
-               | TrackChunk { track_len :: Int
+               | TrackChunk { track_len   :: Int
                             , midi_events :: [MidiEvent] }
                deriving (Show)
 

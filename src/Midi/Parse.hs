@@ -1,18 +1,17 @@
 module Midi.Parse ( pMidiFile
                   , pMidiFromFile) where
-import Control.Monad (replicateM)
-import Data.Bits ((.&.))
-import qualified Data.ByteString as BS (pack, readFile)
-import Data.Char (chr, ord)
-import Data.List.Split (chunksOf)
-import Data.Word (Word8)
-import Text.Parsec.ByteString (Parser)
-import Text.ParserCombinators.Parsec (parse, many, (<|>))
-import Text.ParserCombinators.Parsec.Char (anyChar)
-import Text.ParserCombinators.Parsec.Combinator (lookAhead)
-import Midi.Format
-import Midi.Const
-import Sure
+import           Control.Monad                            (replicateM)
+import           Data.Bits                                ((.&.))
+import qualified Data.ByteString                          as BS (pack, readFile)
+import           Data.List.Split                          (chunksOf)
+import           Data.Word                                (Word8)
+import           Midi.Const
+import           Midi.Format
+import           Sure
+import           Text.Parsec.ByteString                   (Parser)
+import           Text.ParserCombinators.Parsec            (many, parse, (<|>))
+import           Text.ParserCombinators.Parsec.Char       (anyChar)
+import           Text.ParserCombinators.Parsec.Combinator (lookAhead)
 
 carry d x y = d * x + y
 bytes2int n = foldl (carry n) 0 . map fromEnum
@@ -40,15 +39,15 @@ pEventWith 0xf7 delta_time = pSysexEvent 0xf7 delta_time
 pEventWith 0xff delta_time = pMetaEvent 0xff delta_time
 pEventWith status_byte delta_time = pCtrlEvent status_byte delta_time
 
-pEventLast last_status_byte = do { delta_time <- pVarlength
-                                 ; byte <- lookAhead anyByte
-                                 ; status_byte <- if byte < 128 then return byte else anyByte
-                                 ; pEventWith status_byte delta_time } :: Parser MidiEvent
+pEventLast _ = do { delta_time <- pVarlength
+                  ; byte <- lookAhead anyByte
+                  ; status_byte <- if byte < 128 then return byte else anyByte
+                  ; pEventWith status_byte delta_time } :: Parser MidiEvent
 
 pEvents = p 0 [] where p last_status_byte events = do { e <- pEventLast last_status_byte
                                                       ; p (status_byte e) (e:events) } <|> (return $ reverse events)
 
-pChunkWith "MThd" len track = HeadChunk1 x y z where [x, y, z] = map (bytes2int 256) . chunksOf 2 $ track
+pChunkWith "MThd" _ track = HeadChunk1 x y z where [x, y, z] = map (bytes2int 256) . chunksOf 2 $ track
 pChunkWith "MTrk" len track = TrackChunk len events where events = sure . parse pEvents "MTrk" . BS.pack $ track
 
 pChunk = do { mgk <- replicateM 4 anyChar
